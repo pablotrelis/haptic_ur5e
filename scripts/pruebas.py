@@ -32,25 +32,25 @@ roll = Float64()
 # Math vars
 pi = math.radians(180)
 
-    #########################################
-    # Callback button from /Geomagic/button #
-    #########################################
+#########################################
+# Callback button from /Geomagic/button #
+#########################################
 def Callback_botones(botones):
     boton_gris.data = botones.grey_button
     #rospy.loginfo(boton_gris)
 
-    #####################################
-    # Callback pose from /Geomagic/pose #
-    #####################################
+#####################################
+# Callback pose from /Geomagic/pose #
+#####################################
 def Callback_pose(posicion):
     pose_x.data = posicion.pose.position.x
     pose_y.data = posicion.pose.position.y
     pose_z.data = posicion.pose.position.z
     #rospy.loginfo(pose_x)
 
-    #############################################
-    # Callback pose from /Geomagic/joint_states #
-    #############################################
+#############################################
+# Callback pose from /Geomagic/joint_states #
+#############################################
 def Callback_joints(joints):
     waist.data = joints.position[0]
     shoulder.data = joints.position[1]
@@ -60,12 +60,12 @@ def Callback_joints(joints):
     roll.data = joints.position[5]
     #rospy.loginfo(posicion_juntas)
 
-    #################
-    # Main function #
-    #################
+#################
+# Main function #
+#################
 def main():
     # Inicializo nodo - lectura_botones -
-    rospy.init_node("lectura_botones", anonymous=False)
+    rospy.init_node("haptic_jointpose", anonymous=False)
     # Subscribo topics /Geomagic/button, /Geomagic/pose y /Geomagic/joint_status
     sub_btn = rospy.Subscriber("/Geomagic/button", DeviceButtonEvent, Callback_botones)
     sub_pose = rospy.Subscriber("/Geomagic/pose", PoseStamped, Callback_pose)
