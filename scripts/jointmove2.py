@@ -38,7 +38,7 @@ def Callback_joints(joints):
     #rospy.loginfo(posicion_juntas)
 
 def main():
-    rospy.init_node('haptic_jointpose', anonymous=True)
+    rospy.init_node('haptic_jointpose', anonymous=False)
     #joint_goal = get_current_joint_values()
     moveit_commander.roscpp_initialize(sys.argv)
     robot = moveit_commander.RobotCommander()
@@ -47,7 +47,7 @@ def main():
     sub_botones = rospy.Subscriber("/Geomagic/button", DeviceButtonEvent, Callback_botones)
     sub_joints = rospy.Subscriber("/Geomagic/joint_states", JointState, Callback_joints)
 
-    r = rospy.Rate(10000000)
+    r = rospy.Rate(10)
 
     move_group = moveit_commander.MoveGroupCommander("manipulator")
 

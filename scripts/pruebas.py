@@ -7,6 +7,7 @@ from std_msgs.msg import Int16, Float64
 import sys
 import tf
 import moveit_commander
+from moveit_commander.conversions import pose_to_list
 import random
 from geometry_msgs.msg import Pose, Point, Quaternion
 from math import pi
@@ -35,27 +36,29 @@ def main():
 
     pose_goal = Pose()
     moveit_commander.roscpp_initialize(sys.argv)
-    group = [moveit_commander.MoveGroupCommander("manipulator")]
+    move_group = moveit_commander.MoveGroupCommander("manipulator")
 
+    pose_goal.position.x = -0.8
+    pose_goal.position.y = 0.133
+    pose_goal.position.z = 0.2
     while not rospy.is_shutdown():
-         if(boton_gris.data == 1):
-           pose_goal.orientation.w = 0.0
-           pose_goal.position.x = pose_x.data/100
-           pose_goal.position.y = pose_y.data/100
-           pose_goal.position.z = pose_z.data/100
-           group[0].set_pose_target(pose_goal)
-           group[0].go(True)
+        if(boton_gris.data == 1):
+            #pose_goal.orientation.w = 0.0
+            pose_goal.position.x = -(pose_z.data*1.9-471)/1000
+            pose_goal.position.y = -(pose_x.data*1.62-135)/1000
+            pose_goal.position.z = (pose_y.data*1+250)/1000
+            print(pose_goal.position.x)
+            #pose_goal.position.y = pose_y.data/100
+            #pose_goal.position.z = pose_z.data/100
+        #group[0].set_pose_target(pose_goal)
+        #group[0].go(True)
+        #print(pose_x.data)
 
-         else:
-             print("hola")
-           pose_goal.orientation.x = 2.15
-           pose_goal.orientation.y = 3.097
-           pose_goal.orientation.z = -1.505
-           pose_goal.position.x = -0.6
-           pose_goal.position.y = 0.14
-           pose_goal.position.z = 0.106
-           group[0].set_pose_target(pose_goal)
-           group[0].go(True)
+
+        move_group.set_pose_target(pose_goal)
+        plan=move_group.go(wait=True)
+        move_group.stop()
+        move_group.clear_pose_targets()
 
 
 if __name__ == "__main__":
