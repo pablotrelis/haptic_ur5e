@@ -9,7 +9,7 @@ import geometry_msgs.msg
 import math
 from std_msgs.msg import String, Int16, Float64
 from moveit_commander.conversions import pose_to_list
-from geometry_msgs.msg import PoseStamped, WrenchStamped, Vector3
+from geometry_msgs.msg import PoseStamped, WrenchStamped
 from geomagic_control.msg import DeviceButtonEvent, DeviceFeedback
 from sensor_msgs.msg import JointState
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
@@ -30,7 +30,7 @@ elbow = Float64()
 yaw = Float64()
 pitch = Float64()
 roll = Float64()
-# Forces vars
+# Force vars
 force_x = Float64()
 force_y = Float64()
 force_z = Float64()
@@ -69,51 +69,53 @@ def Callback_force(forces):
 #################
 def main():
     # Inicializo nodo - haptic_jointpose -
-    rospy.init_node('haptic_jointpose', anonymous=False)
-    # Moveit commander, robot commander y planning scene
-    moveit_commander.roscpp_initialize(sys.argv)
-    robot = moveit_commander.RobotCommander()
-    scene = moveit_commander.PlanningSceneInterface()
+    rospy.init_node('jointmove4', anonymous=False)
+
+    jt_pub_ur5e = rospy.Publisher('/scaled_pos_traj_controller/command', JointTrajectory, queue_size=1)
+    pub_force = rospy.Publisher('/Geomagic/force_feedback', DeviceFeedback, queue_size=1)
     # Subscribo topics /Geomagic/button y /Geomagic/joint_status
     sub_botones = rospy.Subscriber("/Geomagic/button", DeviceButtonEvent, Callback_botones)
     sub_joints = rospy.Subscriber("/Geomagic/joint_states", JointState, Callback_joints)
-    # Subscribo topic fuerzas /wrench
-    sub_force = rospy.Subscriber("/wrench", WrenchStamped, Callback_force)
-    # Publish force feedback
-    pub = rospy.Publisher('/Geomagic/force_feedback', DeviceFeedback, queue_size=1)
-    r = rospy.Rate(1000)
-    # Instancio MoveGroupCommander, para UR5e - manipulator - (Robot planning group)
-    move_group = moveit_commander.MoveGroupCommander("manipulator")
-    # Publico topic /move_group/display_planned_path
-    display_trajectory_publisher = rospy.Publisher('/move_group/display_planned_path',
-                                               moveit_msgs.msg.DisplayTrajectory,
-                                               queue_size=20)
 
+    sub_force = rospy.Subscriber("/wrench", WrenchStamped, Callback_force)
+    r = rospy.Rate(10)
+
+    jt_ur5e = JointTrajectory()
+    jt_ur5e.points = [JointTrajectoryPoint()]
+    jt_ur5e.joint_names = ['shoulder_pan_joint','shoulder_lift_joint','elbow_joint',
+                  'wrist_1_joint','wrist_2_joint','wrist_3_joint']
     # Inicializo joint vars
-    joint_goal = move_group.get_current_joint_values()
+    joint_goal = [pi/2,-0.2689*2,0.6397+pi/2,-pi+pi/5,-pi/2,pi]
     joint_haptic = [0,0,0,0,0,0]
-    joint_goal = [pi/2,-0.2689*2,0.6397+pi/2,-pi+pi/5,-pi/2+pi,pi]
+    jt_ur5e.points[0].positions=joint_goal
+    #jt_ur5e.points[0].velocities = [0.5,0.5,0.5,0.5,0.5,0.5]
+    #jt_ur5e.points[0].accelerations = [0.5,0.5,0.5,0.5,0.5,0.5]
+    jt_ur5e.points[0].time_from_start.secs = 1
+    # Force vars
     f_const=10
     f_cap=0.6
     df=DeviceFeedback()
     df.lock=[False]
+
     ############################
     # Main while rospy running #
     ############################
-    iii=1
     while not rospy.is_shutdown():
-        r.sleep()
-        df.force.x=-force_x.data/f_const
+        ##################
+        # Forces control #
+        ##################
+        df.force.x=force_x.data/f_const
         if(df.force.x<f_cap and df.force.x>-f_cap ):
             df.force.x=0
         df.force.y=-force_y.data/f_const
         if(df.force.y<f_cap and df.force.y>-f_cap ):
             df.force.y=0
-        df.force.z=-force_z.data/f_const
+        df.force.z=-force_z.data/f_const-1
         if(df.force.z<f_cap and df.force.z>-f_cap ):
             df.force.z=0
         #if(df.force.x!=0 or df.force.y!=0 or df.force.z!=0):
-        pub.publish(df)
+        pub_force.publish(df)
+
         ######################
         # Push button action #
         ######################
@@ -126,16 +128,12 @@ def main():
             joint_goal[1] = -joint_haptic[1]-0.2689
             joint_goal[2] = -joint_haptic[2]+pi/2
             joint_goal[3] = joint_haptic[4]+pi/5
-            joint_goal[4] = joint_haptic[3]-pi-pi/2+pi
+            joint_goal[4] = joint_haptic[3]-pi-pi/2
             joint_goal[5] = joint_haptic[5]
-
         ##### Final if grey button #####
-
-        # The go command can be called with joint values, poses, or without any
-        # parameters if you have already set the pose or joint target for the group
-        move_group.go(joint_goal, wait=True)
-        # Con stop elimino movimiento residual
-        move_group.stop()
+        jt_ur5e.points[0].positions=joint_goal
+        jt_pub_ur5e.publish(jt_ur5e)
+        r.sleep()
     ##### Final while rospy running #####
 
 ###############

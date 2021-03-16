@@ -51,7 +51,7 @@ def Callback_force(forces):
 #################
 def main():
     # Inicializo nodo - haptic_jointpose -
-    rospy.init_node('haptic_jointpose', anonymous=False)
+    rospy.init_node('testeo_forces', anonymous=False)
     # Moveit commander, robot commander y planning scene
     moveit_commander.roscpp_initialize(sys.argv)
     # Subscribo topics /Geomagic/button y /Geomagic/joint_status
@@ -69,6 +69,7 @@ def main():
 
 
     df=DeviceFeedback()
+    df.force=Vector3()
     ############################
     # Main while rospy running #
     ############################
