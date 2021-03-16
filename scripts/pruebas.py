@@ -13,6 +13,10 @@ from sensor_msgs.msg import JointState
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 import math
 
+##########################################
+# Pose trayectory control UR5e Geomagic #
+##########################################
+
 ############
 # Var init #
 ############
@@ -22,6 +26,10 @@ boton_gris = Int16()
 pose_x = Float64()
 pose_y = Float64()
 pose_z = Float64()
+ori_x = Float64()
+ori_y = Float64()
+ori_z = Float64()
+ori_w = Float64()
 # Joints vars
 waist = Float64()
 shoulder = Float64()
@@ -47,6 +55,10 @@ def Callback_pose(posicion):
     pose_y.data = posicion.pose.position.y
     pose_z.data = posicion.pose.position.z
     #rospy.loginfo(pose_x)
+    ori_x.data = posicion.pose.orientation.x
+    ori_y.data = posicion.pose.orientation.y
+    ori_z.data = posicion.pose.orientation.z
+    ori_w.data = posicion.pose.orientation.w
 
 #############################################
 # Callback pose from /Geomagic/joint_states #
@@ -84,7 +96,7 @@ def main():
     # Joint move source  #
     ######################
     # Envio el brazo a la pose de inicio mediante joint position
-    joint_goal = [0,-23.7*pi/180,60.59*pi/180,-218.28*pi/180,pi*3/2,pi]
+    joint_goal = [0,-23.7*pi/180,60.59*pi/180,-218.28*pi/180,pi*3/2,0]
     move_group.go(joint_goal, wait=True)
     move_group.stop()
     #######################
@@ -102,7 +114,12 @@ def main():
         # Push button action #
         ######################
         if(boton_gris.data == 1):
-            #pose_goal.orientation.w = 0.0
+            # Orientacion en quartenions
+            pose_goal.orientation.x = -ori_z.data
+            pose_goal.orientation.y = -ori_x.data
+            pose_goal.orientation.z = ori_y.data
+            pose_goal.orientation.w = ori_w.data
+            # Posicion tool x, y, z
             pose_goal.position.x = -(pose_z.data*1.9-471)/1000
             pose_goal.position.y = -(pose_x.data*1.62-135)/1000
             pose_goal.position.z = (pose_y.data*1+250)/1000

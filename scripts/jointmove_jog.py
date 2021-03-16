@@ -100,19 +100,7 @@ def main():
     ############################
     iii=1
     while not rospy.is_shutdown():
-        #df.force.x=force_x.data
-        #df.force.y=force_y.data
-        #df.force.z=force_z.data
-        '''
-        if (iii==1):
-            iii=0
-            df.force.x=1
-            df.force.y=1
-            df.force.z=1
-            print(df)
-            pub.publish(df)
-        #print df
-        '''
+
         ######################
         # Push button action #
         ######################
@@ -121,12 +109,12 @@ def main():
                                             yaw.data, pitch.data, roll.data]
             print joint_haptic
             #r.sleep()
-            joint_goal[0] = joint_haptic[0]+pi/2
-            joint_goal[1] = -joint_haptic[1]-0.2689
-            joint_goal[2] = -joint_haptic[2]+pi/2
-            joint_goal[3] = joint_haptic[4]+pi/5
-            joint_goal[4] = joint_haptic[3]-pi-pi/2+pi
-            joint_goal[5] = joint_haptic[5]
+            joint_goal[0] = joint_goal[0]
+            joint_goal[1] = joint_goal[1]-0.05
+            joint_goal[2] = joint_goal[2]
+            joint_goal[3] = joint_goal[3]
+            joint_goal[4] = joint_goal[4]
+            joint_goal[5] = joint_goal[5]
         ##### Final if grey button #####
 
 
