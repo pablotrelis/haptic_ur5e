@@ -94,12 +94,15 @@ def main():
     # Inicializo joint vars
     joint_goal = [pi/2,-0.2689*2,0.6397+pi/2,-pi+pi/5,-pi/2,pi]
     joint_haptic = [0,0,0,0,0,0]
-    rt_control=1 # 0-> lento y fluido 1-> CUIDADO time_from_start
+    # TIME FROM START CONTROL
+    rt_control=0 # 0-> lento y fluido 1-> CUIDADO time_from_start
     if rt_control==1:
         # Control por tiempo en nano segundo (CUIDADO nsecs muy bajo)
         jt_ur5e.points[0].time_from_start.nsecs = 500000000
+        tfs=jt_ur5e.points[0].time_from_start.nsecs/1000000000.0
     else:
         jt_ur5e.points[0].time_from_start.secs = 1
+        tfs=jt_ur5e.points[0].time_from_start.secs
     # Force vars
     f_const=10 # Force div
     f_cap=1 # Force sensitivity
@@ -118,11 +121,18 @@ def main():
     rospy.sleep(2)
     '''
     jt_ur5e.points[0].positions = joint_goal
-    print ('\033[1;32;38m ##### Ready ##### \n')
+
+    ####################
+    # Print robot info #
+    ####################
+    print ('\033[1;32;38m ##### Ready ##### \033[1;37;0m \n')
     r.sleep()
-    if vel.data>0.5:
-        print'\033[1;33;38mWARNING: Robot speed = ',vel.data*100,'%'
-        print '\033[1;32;38m \n'
+    print '\033[1;33;38m Robot Speed: \033[1;37;0m', vel.data*100,'%'
+    print '\033[1;33;38m Time From Start: \033[1;37;0m', tfs,'s'
+    if tfs<0.5:
+        print '\033[1;31;38m WARN: Time From Start < 0.5s \033[1;37;0m'
+    print '\033[1;37;38m ==================== \033[1;37;0m'
+
     ############################
     # Main while rospy running #
     ############################
@@ -130,12 +140,12 @@ def main():
         # Activar/Desactivar fuerzas
         if(force_flag==0 and boton_blanco.data == 1 ):
             force_flag=1
-            print 'Control de fuerzas activado'
+            print ('\033[1;34;38m Control de fuerzas \033[1;32;38m activado \033[1;37;0m')
             while(boton_blanco.data == 1):
                 r.sleep()
         elif(force_flag==1 and boton_blanco.data == 1 ):
             force_flag=0
-            print 'Control de fuerzas desactivado'
+            print ('\033[1;34;38m Control de fuerzas \033[1;31;38m desactivado \033[1;37;0m')
             df.force.x=0
             df.force.y=0
             df.force.z=0

@@ -1,4 +1,4 @@
-<launch>"
+<launch>
 	<node pkg="haptic_ur5e" type="jointmove4.py" name="haptic_jointpose" output="screen">
 	
 	</node>
