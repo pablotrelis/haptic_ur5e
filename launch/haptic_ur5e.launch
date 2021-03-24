@@ -1,6 +1,6 @@
 <launch>
 	<include file="$(find ur_robot_driver)/launch/ur5e_bringup.launch">
-        	<arg name="robot_ip" value="192.168.1.5"/>
+        	<arg name="robot_ip" value="192.168.0.184"/>
 	</include>
 	<include file="$(find geomagic_control)/launch/geomagic_headless.launch">
 	</include>
