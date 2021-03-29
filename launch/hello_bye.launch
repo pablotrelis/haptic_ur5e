@@ -1,0 +1,11 @@
+<launch>
+	<arg name="robot_ip" default="192.168.0.184" doc="IP address by which the robot can be reached."/>
+	<include file="$(find ur_robot_driver)/launch/ur5e_bringup.launch">
+        	<arg name="robot_ip" value="$(arg robot_ip)"/>
+	</include>
+	<include file="$(find geomagic_control)/launch/geomagic_headless.launch">
+	</include>
+
+	<node pkg="haptic_ur5e" type="hello_bye.py" name="hello_bye" output="screen">
+	</node>
+</launch>
