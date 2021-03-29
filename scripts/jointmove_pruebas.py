@@ -2,8 +2,6 @@
 import sys
 import copy
 import rospy
-import moveit_commander
-import moveit_msgs.msg
 import geometry_msgs.msg
 import math
 from std_msgs.msg import String, Int16, Float64
@@ -37,6 +35,7 @@ force_z = Float64()
 vel = Float64()
 # Math vars
 pi = math.radians(180)
+
 
 #########################################
 # Callback button from /Geomagic/button #
@@ -74,26 +73,31 @@ def Callback_speed(speed):
 def main():
     # Inicializo nodo - haptic_jointpose -
     rospy.init_node('haptic_jointpose', anonymous=False)
-    r = rospy.Rate(10)
-    # Pub forces /Geomagic/force_feedback and joints /scaled_pos_traj_controller/command
-    jt_pub_ur5e = rospy.Publisher('/scaled_pos_traj_controller/command', JointTrajectory, queue_size=1, latch=True)
-    pub_force = rospy.Publisher('/Geomagic/force_feedback', DeviceFeedback, queue_size=1, latch=True)
+    r = rospy.Rate(10) #Rate 500Hz
+    # Pub  /Geomagic/force_feedback ,/scaled_pos_traj_controller/command
+    jt_pub_ur5e = rospy.Publisher('/scaled_pos_traj_controller/command',
+                            JointTrajectory, queue_size=1, latch=True)
+    pub_force = rospy.Publisher('/Geomagic/force_feedback',
+                            DeviceFeedback, queue_size=1, latch=True)
     # Subscribo topics /Geomagic/button y /Geomagic/joint_status
-    sub_botones = rospy.Subscriber("/Geomagic/button", DeviceButtonEvent, Callback_botones)
-    sub_joints = rospy.Subscriber("/Geomagic/joint_states", JointState, Callback_joints)
+    sub_botones = rospy.Subscriber("/Geomagic/button", DeviceButtonEvent,
+                                                        Callback_botones)
+    sub_joints = rospy.Subscriber("/Geomagic/joint_states", JointState,
+                                                        Callback_joints)
     # Subscribo forces de UR5e /wrench
     sub_force = rospy.Subscriber("/wrench", WrenchStamped, Callback_force)
-
-    sub_speed = rospy.Subscriber("/speed_scaling_factor", Float64, Callback_speed)
+    # Subscribo valocidad robot /speed_scaling_factor
+    sub_speed = rospy.Subscriber("/speed_scaling_factor",Float64,Callback_speed)
 
     # Joint msg
     jt_ur5e = JointTrajectory()
     jt_ur5e.points = [JointTrajectoryPoint()]
-    jt_ur5e.joint_names = ['shoulder_pan_joint','shoulder_lift_joint','elbow_joint',
-                  'wrist_1_joint','wrist_2_joint','wrist_3_joint']
+    jt_ur5e.joint_names = ['shoulder_pan_joint','shoulder_lift_joint',
+                'elbow_joint','wrist_1_joint','wrist_2_joint','wrist_3_joint']
     # Inicializo joint vars
-    joint_goal = [0,-math.radians(35),math.radians(70),-pi+pi/5,-pi/2,pi]
+    joint_goal = [pi/2,-0.2689*2,0.6397+pi/2,-pi+pi/5,-pi/2,pi]
     joint_haptic = [0,0,0,0,0,0]
+    joint_des = math.radians(0) #Desfase por acceleration y velocities
     # TIME FROM START CONTROL
     rt_control=1 # 0-> lento y fluido 1-> CUIDADO time_from_start
     if rt_control==1:
@@ -123,13 +127,13 @@ def main():
     print ('\033[1;32;38m ##### Ready ##### \033[1;37;0m \n')
     r.sleep()
     print '\033[1;33;38m Robot Speed: \033[1;37;0m', vel.data*100,'%'
-    assert vel.data<0.4, "Velocidad muy elevada"
+    #assert vel.data<0.41, "Velocidad muy elevada"
     print '\033[1;33;38m Time From Start: \033[1;37;0m', tfs,'s'
     if tfs<0.5:
         print '\033[1;31;38m WARN: Time From Start < 0.5s \033[1;37;0m'
     print '\033[1;37;38m ==================== \033[1;37;0m'
     '''
-    # Pose inicial
+    # Pose inicial (Movimiento desde pose apagado)
     jt_ur5e.points[0].positions=[pi/2,-pi/2,pi/2+pi/4,-pi+pi/5,-pi/2,pi]
     jt_pub_ur5e.publish(jt_ur5e)
     rospy.sleep(3)
@@ -141,12 +145,14 @@ def main():
         # Activar/Desactivar fuerzas
         if(force_flag==0 and boton_blanco.data == 1 ):
             force_flag=1
-            print ('\033[1;34;38m Control de fuerzas \033[1;32;38m activado \033[1;37;0m')
+            print ('\033[1;34;38m Control de fuerzas \033[1;32;38m '
+                                            'activado \033[1;37;0m')
             while(boton_blanco.data == 1):
                 r.sleep()
         elif(force_flag==1 and boton_blanco.data == 1 ):
             force_flag=0
-            print ('\033[1;34;38m Control de fuerzas \033[1;31;38m desactivado \033[1;37;0m')
+            print ('\033[1;34;38m Control de fuerzas \033[1;31;38m '
+                                            'desactivado \033[1;37;0m')
             df.force.x=0
             df.force.y=0
             df.force.z=0
@@ -166,26 +172,32 @@ def main():
             df.force.z=force_y.data/f_const
             if(df.force.z<f_cap+0.7 and df.force.z>-f_cap ):
                 df.force.z=0
-            if(force_x.data>df.force.x+1 or force_y.data>df.force.y+1 or force_z.data>df.force.z+1):
+            if(force_x.data>df.force.x+1 or force_y.data>df.force.y+1 or
+                                            force_z.data>df.force.z+1):
                 pub_force.publish(df)
-            if(force_x.data<df.force.x-1 or force_y.data<df.force.y-1 or force_z.data<df.force.z-1):
+            if(force_x.data<df.force.x-1 or force_y.data<df.force.y-1 or
+                                            force_z.data<df.force.z-1):
                 pub_force.publish(df)
 
         ######################
         # Push button action #
         ######################
         if(boton_gris.data == 1):
-            print('ttt')
+            ac=0
+            ve=0
+            jt_ur5e.points[0].accelerations=[ac,ac,ac,ac,ac,ac]
+            jt_ur5e.points[0].velocities=[ve,ve,ve,ve,ve,ve]
             joint_haptic = [waist.data, shoulder.data, elbow.data,
                                     yaw.data, pitch.data, roll.data]
             #print joint_haptic
-            joint_goal[0] = joint_haptic[0]
-            joint_goal[1] = -math.radians(35)
-            joint_goal[2] = joint_haptic[2]*0.709+1.7892
-            joint_goal[3] = joint_haptic[4]+pi/5
-            joint_goal[4] = joint_haptic[3]-pi-pi/2
-            joint_goal[5] = joint_haptic[5]
+            joint_goal[0] = joint_haptic[0]+pi/2+joint_des
+            joint_goal[1] = -joint_haptic[1]-0.2689+joint_des
+            joint_goal[2] = -joint_haptic[2]+pi/2+joint_des
+            joint_goal[3] = joint_haptic[4]+pi/5+joint_des
+            joint_goal[4] = joint_haptic[3]-pi-pi/2+joint_des
+            joint_goal[5] = joint_haptic[5]+joint_des
         ##### Final if grey button #####
+
         jt_ur5e.points[0].positions=joint_goal
         jt_pub_ur5e.publish(jt_ur5e)
         r.sleep()

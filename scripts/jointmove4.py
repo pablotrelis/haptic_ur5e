@@ -97,16 +97,16 @@ def main():
     # Inicializo joint vars
     joint_goal = [pi/2,-0.2689*2,0.6397+pi/2,-pi+pi/5,-pi/2,pi]
     joint_haptic = [0,0,0,0,0,0]
-    joint_des = math.radians(8) #Desfase por acceleration y velocities
+    joint_des = math.radians(0) #Desfase por acceleration y velocities
+    ac=0 #accelerations
+    ve=0 #velocities
+    flj=0
+    jt_ur5e.points[0].accelerations=[ac,ac,ac,ac,ac,ac]
+    jt_ur5e.points[0].velocities=[ve,ve,ve,ve,ve,ve]
     # TIME FROM START CONTROL
-    rt_control=1 # 0-> lento y fluido 1-> CUIDADO time_from_start
-    if rt_control==1:
-        # Control por tiempo en nano segundo (CUIDADO nsecs muy bajo)
-        jt_ur5e.points[0].time_from_start.nsecs = 500000000
-        tfs=jt_ur5e.points[0].time_from_start.nsecs/1000000000.0
-    else:
-        jt_ur5e.points[0].time_from_start.secs = 1
-        tfs=jt_ur5e.points[0].time_from_start.secs
+    # Control por tiempo en nano segundos (CUIDADO nsecs muy bajo)
+    jt_ur5e.points[0].time_from_start.nsecs = 1500000000
+    tfs=jt_ur5e.points[0].time_from_start.nsecs/1000000000.0
     # Force vars
     f_const=10 # Force div
     f_cap=1 # Force sensitivity
@@ -127,7 +127,7 @@ def main():
     print ('\033[1;32;38m ##### Ready ##### \033[1;37;0m \n')
     r.sleep()
     print '\033[1;33;38m Robot Speed: \033[1;37;0m', vel.data*100,'%'
-    #assert vel.data<0.41, "Velocidad muy elevada"
+    assert vel.data<0.61, "Velocidad muy elevada"
     print '\033[1;33;38m Time From Start: \033[1;37;0m', tfs,'s'
     if tfs<0.5:
         print '\033[1;31;38m WARN: Time From Start < 0.5s \033[1;37;0m'
@@ -183,8 +183,13 @@ def main():
         # Push button action #
         ######################
         if(boton_gris.data == 1):
-            jt_ur5e.points[0].accelerations=[0.5,0.5,0.5,0.5,0.5,0.5]
-            jt_ur5e.points[0].velocities=[0.7,0.7,0.7,0.7,0.7,0.7]
+            if(flj==0):
+                jt_ur5e.points[0].time_from_start.nsecs = 500000000 #0.5 sec
+                tfs=jt_ur5e.points[0].time_from_start.nsecs/1000000000.0
+                print '\033[1;33;38m Time From Start: \033[1;37;0m',tfs,'s'
+
+                flj=1;
+                r.sleep()
             joint_haptic = [waist.data, shoulder.data, elbow.data,
                                     yaw.data, pitch.data, roll.data]
             #print joint_haptic
