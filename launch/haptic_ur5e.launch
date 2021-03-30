@@ -6,6 +6,6 @@
 	<include file="$(find geomagic_control)/launch/geomagic_headless.launch">
 	</include>
 
-	<node pkg="haptic_ur5e" type="jointmove4.py" name="haptic_jointpose" output="screen">
+	<node pkg="haptic_ur5e" type="rtde_control.py" name="haptic_jointpose" output="screen">
 	</node>
 </launch>

@@ -35,7 +35,7 @@ force_z = Float64()
 vel = Float64()
 # Math vars
 pi = math.radians(180)
-
+output_stream = sys.stdout
 
 #########################################
 # Callback button from /Geomagic/button #
@@ -73,7 +73,7 @@ def Callback_speed(speed):
 def main():
     # Inicializo nodo - haptic_jointpose -
     rospy.init_node('haptic_jointpose', anonymous=False)
-    r = rospy.Rate(10) #Rate 500Hz
+    r = rospy.Rate(500) #Rate 500Hz
     # Pub  /Geomagic/force_feedback ,/scaled_pos_traj_controller/command
     jt_pub_ur5e = rospy.Publisher('/scaled_pos_traj_controller/command',
                             JointTrajectory, queue_size=1, latch=True)
@@ -105,7 +105,7 @@ def main():
     jt_ur5e.points[0].velocities=[ve,ve,ve,ve,ve,ve]
     # TIME FROM START CONTROL
     # Control por tiempo en nano segundos (CUIDADO nsecs muy bajo)
-    jt_ur5e.points[0].time_from_start.nsecs = 1500000000
+    jt_ur5e.points[0].time_from_start.nsecs = 2000000000
     tfs=jt_ur5e.points[0].time_from_start.nsecs/1000000000.0
     # Force vars
     f_const=10 # Force div
@@ -118,7 +118,7 @@ def main():
     df.force.y=0
     df.force.z=0
     pub_force.publish(df)
-    rospy.sleep(2)
+    rospy.sleep(3)
     jt_ur5e.points[0].positions = joint_goal
 
     ####################
@@ -163,6 +163,9 @@ def main():
         # Forces control #
         ##################
         if(force_flag==1):
+            # Print fuerzas z
+            output_stream.write(' Fuerza aplicada: %.4f\r' % -force_z.data)
+            output_stream.flush()
             df.force.x=force_x.data/f_const
             if(df.force.x<f_cap and df.force.x>-f_cap ):
                 df.force.x=0
@@ -187,7 +190,6 @@ def main():
                 jt_ur5e.points[0].time_from_start.nsecs = 500000000 #0.5 sec
                 tfs=jt_ur5e.points[0].time_from_start.nsecs/1000000000.0
                 print '\033[1;33;38m Time From Start: \033[1;37;0m',tfs,'s'
-
                 flj=1;
                 r.sleep()
             joint_haptic = [waist.data, shoulder.data, elbow.data,
