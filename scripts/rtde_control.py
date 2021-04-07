@@ -114,9 +114,10 @@ def main():
     jt_ur5e.joint_names = ['shoulder_pan_joint','shoulder_lift_joint',
                 'elbow_joint','wrist_1_joint','wrist_2_joint','wrist_3_joint']
     # Inicializo joint vars
-    joint_goal = [pi/2,-0.2689*2,0.6397+pi/2,-pi+pi/5,-pi/2,pi] #init
+    joint_goal =[pi/2,-math.radians(15.4)*2,0.6397+pi/2,-pi+pi/5,-pi/2,pi] #init
     joint_haptic = [0,0,0,0,0,0]
     joint_des = math.radians(0) #Desfase por acceleration y velocities
+    base_mult = 1.5
     ac=0 #accelerations
     ve=0 #velocities
     flg=0 #Flag reajuste time_from_start
@@ -155,6 +156,7 @@ def main():
     ############################
     # Main while rospy running #
     ############################
+    f_count=0
     while not rospy.is_shutdown():
         # Activar/Desactivar fuerzas
         if(force_flag==0 and boton_blanco.data == 1 ):
@@ -238,9 +240,11 @@ def main():
             df.force.x=px*force_per
             df.force.y=py*force_per
             df.force.z=pz*force_per
-            # Publicacion fuerzas
-            pub_force.publish(df)
-
+            # Publicacion fuerzas (Se debe disminuir la frecuencia)
+            if f_count==5:
+                f_count=0
+                pub_force.publish(df)
+            f_count=f_count+1
         ######################
         # Push button action #
         ######################
@@ -257,8 +261,8 @@ def main():
             joint_haptic = [waist.data, shoulder.data, elbow.data,
                                     yaw.data, pitch.data, roll.data]
             #Set joint value
-            joint_goal[0] = joint_haptic[0]+pi/2+joint_des
-            joint_goal[1] = -joint_haptic[1]-0.2689+joint_des
+            joint_goal[0] = joint_haptic[0]*base_mult+pi/2+joint_des
+            joint_goal[1] = -joint_haptic[1]-math.radians(15.4)+joint_des
             joint_goal[2] = -joint_haptic[2]+pi/2+joint_des
             joint_goal[3] = joint_haptic[4]+pi/5+joint_des
             joint_goal[4] = joint_haptic[3]-pi-pi/2+joint_des
