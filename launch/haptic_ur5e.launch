@@ -1,5 +1,6 @@
 <launch>
 	<arg name="robot_ip" default="192.168.0.184" doc="IP address by which the robot can be reached."/>
+	<arg name="robot_speed" default="0.5"/>
 	<include file="$(find ur_robot_driver)/launch/ur5e_bringup.launch">
         	<arg name="robot_ip" value="$(arg robot_ip)"/>
 	</include>
@@ -8,4 +9,14 @@
 
 	<node pkg="haptic_ur5e" type="rtde_control.py" name="haptic_jointpose" output="screen">
 	</node>
+	<!--
+	<arg name="power_on" default="call /ur_hardware_interface/dashboard/power_on"/>
+	<arg name="brake_release" default="call /ur_hardware_interface/dashboard/brake_release"/>
+	<node pkg="rosservice" type="rosservice" name="power_on" args="$(arg power_on)" />
+	<node pkg="rosservice" type="rosservice" name="brake_release" args="$(arg brake_release)" />
+	-->
+	<arg name="set_speed_slider" default="call --wait /ur_hardware_interface/set_speed_slider $(arg robot_speed)"/>
+	<arg name="play" default="call --wait /ur_hardware_interface/dashboard/play"/>
+	<node pkg="rosservice" type="rosservice" name="set_speed_slider" args="$(arg set_speed_slider)" />
+	<node pkg="rosservice" type="rosservice" name="play" args="$(arg play)" launch-prefix="bash -c 'sleep 4.0; $0 $@' " />
 </launch>

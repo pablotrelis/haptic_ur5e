@@ -8,4 +8,9 @@
 
 	<node pkg="haptic_ur5e" type="hello_bye.py" name="hello_bye" output="screen">
 	</node>
+
+	<arg name="set_speed_slider" default="call --wait /ur_hardware_interface/set_speed_slider 0.6"/>
+	<arg name="play" default="call --wait /ur_hardware_interface/dashboard/play"/>
+	<node pkg="rosservice" type="rosservice" name="set_speed_slider" args="$(arg set_speed_slider)" />
+	<node pkg="rosservice" type="rosservice" name="play" args="$(arg play)" launch-prefix="bash -c 'sleep 3.0; $0 $@' " />
 </launch>
